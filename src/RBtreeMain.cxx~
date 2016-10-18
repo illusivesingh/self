@@ -1,0 +1,30 @@
+#include "RBtree.h"
+
+int main ()
+{
+  RBtree rbt;
+  rbt.insertKey (1);
+  rbt.insertKey (2);
+  rbt.insertKey (3);
+  rbt.insertKey (4);
+  rbt.insertKey (5);
+  rbt.insertKey (6);
+  rbt.insertKey (7);
+
+  // Redirect stdout to a file.
+  std::ofstream out ("tree.txt", ios::out);
+  std::streambuf *coutbuf = std::cout.rdbuf(); // save old buf.
+  std::cout.rdbuf (out.rdbuf()); // Redirect std::cout to out.
+
+  // cout << "Pre: ";
+  rbt.printPreOrder ();
+  // cout << "Post: ";
+  rbt.printInOrder ();
+
+  // Restore stdout.
+  std::cout.rdbuf (coutbuf); 
+  out.close (); 
+  rbt.printTree ();
+  return 0;
+
+}

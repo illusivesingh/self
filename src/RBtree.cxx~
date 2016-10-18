@@ -1,0 +1,236 @@
+
+#include "RBtree.h"
+
+const Node *RBtree::_sentinel = NULL;
+
+/*********************************************************************
+ * PUBLIC METHODS OF the class RBtree. ******************************/
+RBtree::RBtree() {
+  _rbtree = NULL;
+}
+
+RBtree::~RBtree() {
+  if (_rbtree)
+    delete (_rbtree);
+}
+
+void RBtree::insertKey(const int key) {
+  Node *t = NULL;
+  if (!_rbtree)
+    _rbtree = insertKeyInternal(_rbtree, key);
+  else
+    t = insertKeyInternal(_rbtree, key);
+}
+
+void RBtree::deleteKey(const int key) {
+}
+
+int RBtree::getMin() {
+}
+
+int RBtree::getMax() {
+}
+
+int RBtree::getKey(const int key) {
+}
+
+int RBtree::predecessor(const int key) {
+}
+
+int RBtree::successor(const int key) {
+}
+
+void RBtree::printPreOrder() {
+  
+  if (_rbtree)
+    _rbtree->printPreOrder();
+  cout << "\n";
+}
+
+void RBtree::printPostOrder() {
+  if (_rbtree)
+    _rbtree->printPostOrder();
+  cout << "\n";
+}
+
+void RBtree::printInOrder() {
+  if (_rbtree)
+    _rbtree->printInOrder();
+  cout << "\n";
+}
+
+void RBtree::printTree() {
+  printTreeDot();
+  // system ("python3 ./src/printRBTree.py");
+}
+
+/*********************************************************************
+ * PRIVATE METHODS OF the class RBtree. *****************************/
+Node *RBtree::insertKeyInternal(Node *root, const int key) {
+  if (root == NULL) {
+    return new Node (key);
+  }
+
+  if (root->_val == key) {
+    cout << "Key " << key << " is already in the tree.\n";
+    cout << "RB tree does not support duplicate keys.\n";
+    cout << "Returning without inserting the key.\n";
+    return NULL;
+  } else if (key < root->_val) {
+    if (root->_left == NULL) {
+      root->_left = insertKeyInternal(NULL, key);
+      root->_left->_parent = root;
+    } else {
+      return insertKeyInternal (root->_left, key);
+    }
+  } else {
+    // key > root->_val
+    if (root->_right == NULL) {
+      root->_right = insertKeyInternal(NULL, key);
+      root->_right->_parent = root;
+    } else {
+     return insertKeyInternal (root->_right, key);
+    }
+  }
+}
+
+void RBtree::printTreeDot() {
+  static int treeCount = 0;
+  std::stringstream ss;
+  ss << treeCount;
+
+  std::string pngout = "RBtree";
+  pngout.append(ss.str());
+  pngout.append(".png");
+
+  std::ofstream out("RBtree.dot", ios::out);
+  out << "digraph G {\n";
+  out << "node [style=filled, fontcolor=white];";
+  if (_rbtree)
+    _rbtree->traverseDot(out);
+  out << "}\n";
+  out.close();
+
+  std::string cmd = "unflatten -l 2 RBtree.dot | dot -Tpng -o ";
+  cmd.append(pngout);
+  cmd.append("&");
+  system(cmd.c_str());
+
+  std::string cmd2 = "eog ";
+  cmd2.append(pngout);
+  cmd2.append("&");
+  system(cmd2.c_str());
+}
+
+void RBtree::leftRotate(Node *x) {
+  if (x == NULL)
+    return;
+  Node *y = x->_right;
+
+  if (y == NULL)
+    return;  // To be removed once nil leaves are added.
+
+  x->_right = y->_left;
+  if (y->_left != NULL)
+    y->_left->_parent = x;
+
+  y->_parent = x->_parent;
+  if (x->_parent == NULL)
+    _rbtree = y;
+  else if (x == x->_parent->_left)
+    x->_parent->_left = y;
+  else
+    x->_parent->_right = y;
+
+  y->_left = x;
+  x->_parent = y;
+}
+
+void RBtree::rightRotate(Node *x) {
+  if (x == NULL)
+    return;
+  Node *y = x->_left;
+
+  if (y == NULL)
+    return;
+
+  x->_left = y->_right;
+  if (x->_parent == NULL)
+    _rbtree = y;
+  else if (x == x->_parent->_left)
+    x->_parent->_left = y;
+  else
+    x->_parent->_right = y;
+
+  y->_right = x;
+  x->_parent = y;
+}
+/*********************************************************************
+ * PUBLIC METHODS OF the class Node. ********************************/
+Node::Node(int key) {
+  _val = key;
+  _left = _right = _parent = NULL;
+  _color = R;
+}
+
+Node::~Node() {
+}
+
+/*********************************************************************
+ * PRIVATE METHODS OF the class Node. *******************************/
+void Node::printPreOrder() {
+  cout << (_color == R ? "R" : "B") << ", " << _val << "; ";
+  if (_left)
+    _left->printPreOrder();
+  if (_right)
+    _right->printPreOrder();
+}
+
+void Node::printPostOrder() {
+  if (_left)
+    _left->printPostOrder();
+  if (_right)
+    _right->printPostOrder();
+  cout << (_color == R ? "R" : "B") << ", " << _val << "; ";
+}
+
+void Node::printInOrder() {
+  if (_left)
+    _left->printInOrder();
+  cout << (_color == R ? "R" : "B") << ", " << _val << "; ";
+  if (_right)
+    _right->printInOrder();
+}
+
+void Node::traverseDot(std::ofstream &out) {
+  static int nullCount = 0;
+
+  out << _val << " [";
+  if (_color == R)
+    out << "color=red];\n";
+  else
+    out << "color=black];\n";
+  if (_left) {
+    _left->traverseDot(out);
+    out << _val << " -> " << _left->_val << ";\n";
+  } else {
+    std::stringstream ss;
+    ss << nullCount++;
+    std::string null = "null";
+    null.append(ss.str());
+    out << null << "[shape=point]\n";
+    out << _val << " -> " << null << ";\n";
+  }
+
+  if (_right) {
+    _right->traverseDot(out);
+    out << _val << " -> " << _right->_val << ";\n";
+  } else {
+    std::stringstream ss;
+    ss << nullCount++;
+    std::string null = "null";
+    null.append(ss.str());
+    out << null << "[shape=point]\n";
+    out << _val << " -> " << null << ";\n";
+  }
+}
